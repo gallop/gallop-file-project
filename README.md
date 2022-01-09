@@ -4,7 +4,7 @@
 
 minio中文文档：http://docs.minio.org.cn/docs/
 
-
+> 注意： 此demo 用到了webix ui 组件，需要购买授权才能用于商用，这里仅是学习之用!!
 
 
 
