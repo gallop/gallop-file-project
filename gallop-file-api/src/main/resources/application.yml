@@ -1,0 +1,119 @@
+#服务配置
+server:
+  max-http-header-size: 10240
+  servlet:
+    context-path: /fm
+    encoding:
+      charset: utf-8
+      enabled: true
+      force: true
+  port: 8080
+  tomcat:
+    uri-encoding: UTF-8
+spring:
+  datasource:
+    druid:
+      #此处serverTimeZone=Asia/Shanghai无效，需要改为 serverTimezone=CTT 才有效
+      url:  jdbc:mysql://127.0.0.1:3306/file_sys_new?useUnicode=true&characterEncoding=utf8&serverTimezone=CTT
+      driver-class-name:  com.mysql.cj.jdbc.Driver
+      #com.mysql.cj.jdbc.Driver com.mysql.jdbc.Driver
+      username:  root
+      password:  123456
+      initial-size:  10
+      max-active:  50
+      min-idle:  10
+      max-wait:  60000
+      pool-prepared-statements:  true
+      max-pool-prepared-statement-per-connection-size:  20
+      validation-query:  SELECT 1 FROM DUAL
+      test-on-borrow:  false
+      test-on-return:  false
+      test-while-idle:  true
+      time-between-eviction-runs-millis:  60000
+      filters:  stat,wall
+  redis:
+    host: 192.168.0.118
+    password: 123456
+    port: 6379
+    database: 0
+    # 连接超时时间 单位 ms（毫秒）
+    timeout: 6000
+  # 配置session 缓存的存储类型
+  session:
+    store-type: redis
+  # 配置单个上传文件最大为10
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 500MB
+  mvc:
+    view:
+      prefix: /
+      suffix: .html
+  data:
+    mongodb:
+      database: testdb
+      host: 192.168.0.118
+      port: 27017
+      username: myTest
+      password: '123456'
+
+file:
+  #对象存储配置
+  storage:
+    # 当前工作的对象存储模式，分别是local、aliyun、tencent
+    active: minio
+    # 本地对象存储配置信息
+    local:
+      storagePath: d:\\temp\\storage
+      # 这个地方应该是wx模块的WxStorageController的fetch方法对应的地址
+      address: http://192.168.2.122:8080/msdemo/admin/storage/fetch/
+    fastdfs:
+      baseUrl: http://192.168.2.125:8888/
+    minio:
+      minioUrl: http://192.168.0.118:9000/
+      minioName: minioTest #F0IOCT83EI7ZYR7MU8TP
+      minioPass: 12345678 #xcA1yjmrdTCTWg42Di27sJzbhOmbmmjkSPKxgW5n
+      bucketName: mybucket
+fdfs:
+  # 读取时间
+  so-timeout: 1500
+  connect-timeout: 600
+  thumb-image:
+    width: 80
+    height: 80
+  #TrackerList参数,支持多个
+  tracker-list:
+    - 192.168.2.125:22122
+
+pagehelper:
+  #分页插件会自动检测当前的数据库链接，自动选择合适的分页方式。 你可以配置helperDialect 属性来指定分页插件使用哪种方言。
+  helperDialect:  mysql
+  #分页合理化参数，默认值为 false 。当该参数设置为 true 时， pageNum<=0 时会查询第一页， pageNum>pages （超过总数时），会查询最后一页。
+  reasonable: true
+  #支持通过Mapper接口参数传递page参数,默认值为false
+  supportMethodsArguments:  true
+  #默认值为 false ，当该参数设置为 true 时，如果 pageSize=0 或者 RowBounds.limit =0 就会查询出全部的结果（相当于没有执行分页查询，但是返回结果仍然是 Page 类型）。
+  page-size-zero: true
+  #为了支持 startPage(Object params) 方法，增加了该参数来配置参数映射，用于从对象中根据属性名取值
+  params: count=countSql
+
+## mybatis 配置
+mybatis:
+  type-aliases-package: com.gallop.file.pojo
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+#验证码相关配置
+aj:
+  captcha:
+    cache-type: local #分布式部署需要 自己实现CaptchaCacheService 使用redis需要配置redis相关配置
+    type: default #验证码类型 clickword 为点选   blockPuzzle 为滑块验证码   default 两种都实例化
+    font-type: 宋体
+    req-frequency-limit-enable: true #接口请求次数一分钟限制是否开启 true|false
+    req-get-lock-limit: 2  # 验证失败2次，get接口锁定
+    req-get-lock-seconds: 10 # 验证失败后，锁定时间间隔,s
+    req-get-minute-limit: 30 # get接口一分钟内请求数限制
+    req-check-minute-limit: 60 # check接口一分钟内请求数限制
+    req-verify-minute-limit: 60 # verify接口一分钟内请求数限制

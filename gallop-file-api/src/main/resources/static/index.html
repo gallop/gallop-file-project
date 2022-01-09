@@ -1,0 +1,281 @@
+<!doctype html>
+<html>
+<head>
+    <title>文档管理</title>
+    <meta  name = "viewport" content = "initial-scale = 1.0, maximum-scale = 1.0, user-scalable = no">
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <script src="../webix.js" type="text/javascript"></script>
+    <script src="../filemanager.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="../webix.css">
+    <link rel="stylesheet" type="text/css" href="../filemanager.css">
+    <link rel="stylesheet" href="../layui.css">
+    <script src="../layui.js" type="text/javascript"></script>
+    
+    <style type="text/css">
+        .btn-size-rest{
+            height: 32px;
+            line-height: 32px;
+            padding: 0 15px;
+        }
+        .input-size-reset {
+            width: 240px;
+            height:32px;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript" rel="script">
+    //var name = [[${userName}]]
+    //console.log("======name====="+name)
+
+  // 模块化引入 layui
+  layui.define(['jquery', 'form', 'table', 'tree', 'util'], function (exports) {
+    render()
+  })
+function GetRequest() {
+    var url = location.search; //获取url中含"?"符后的字串
+    var theRequest = new Object();
+    if (url.indexOf("?") != -1) {
+        var str = url.substr(1);
+        strs = str.split("&");
+        for(var i = 0; i < strs.length; i ++) {
+            theRequest[strs[i].split("=")[0]]=unescape(strs[i].split("=")[1]);
+        }
+    }
+    return theRequest;
+}
+var Request = new Object();
+Request = GetRequest();
+
+  var token = Request['token'];
+  console.log("out-token="+token)
+
+  function render() {
+
+    var $ = layui.$;
+    var form = layui.form;
+    var table = layui.table;
+    var roleTable = layui.table;
+    var tree = layui.tree;
+    var util = layui.util;
+
+    form.on('submit(save)', function (data) {
+        params = data.field;
+        console.log(JSON.stringify(params));
+        submit($,params);
+        return false;
+    });
+
+
+    window.fileUrl = "http://localhost:8080/fm/admin/api/getFileList?action=list&token="+token
+    console.log("token=="+token)
+    //window.username = $(requestScope.userName)
+
+    webix.ready(function(){
+        var selectId = "";
+        webix.ui({
+            view:"filemanager",
+            id:"files",
+            url: window.fileUrl,
+            handlers:{
+                "create": "/fm/admin/api/create?token="+token,
+                "rename": "/fm/admin/api/operateFile?token="+token,
+                "move": "/api/getFileList?token=",
+                "upload" : "/fm/admin/api/uploadMinio?token="+token,
+                "download": "/fm/admin/api/download?token="+token,
+                "remove": "/fm/admin/api/operateFile?token="+token,
+            },
+
+            on:{
+                onItemClick: function (id) {
+                    console.log("id="+id)
+                    console.log("onItemClick....."+this.getItem(id)+"")
+                    //webix.ajax().get()
+                },
+                "onViewInit": function(name, config){
+                    if (name == "table"){
+                        /*var columns = config.columns;
+                        var newColumn1 = {id: "downCount",
+                            header:"下载次数",
+                            fillspace: 1,
+                            template: function(obj,common){
+                                if(obj.type === 'folder') return '';
+                                else return obj.downCount === undefined?0:obj.downCount;
+                            }
+                        };
+                        webix.toArray(columns).insertAt(newColumn1,2);
+                        var newColumn2 = {id: "readCount",
+                            header:"阅读次数",
+                            fillspace: 1,
+                            template: function(obj,common){
+                                if(obj.type === 'folder') return '';
+                                else return obj.readCount === undefined?0:obj.readCount;
+                            }
+                        };
+                        webix.toArray(columns).insertAt(newColumn2,3);*/
+                    }
+                }
+            },
+            ready:function(){
+                this.getMenu().add({
+                    id: "preview",
+                    icon: "webix_icon wxi-search",
+                    value: "预览",
+                    batch: "file",
+                    method:"previewFile"
+                }, 0);
+                /*this.getMenu().add({
+                    id: "auth",
+                    icon: "webix_icon wxi-user",
+                    value: "授权",
+                    method:"authFile"
+                }, 1);
+                this.getMenu().add({
+                    id: "showlog",
+                    icon: "webix_icon wxi-search",
+                    value: "查看日志",
+                    batch: "file",
+                    method:"authFile"
+                }, 2);*/
+                this.getMenu().add({
+                    id: "download",
+                    icon: "webix_icon wxi-download",
+                    value: "下载",
+                    batch: "file",
+                    method:"download"
+                }, 7);
+              this.getMenu().add({
+                id: "create-root-folder",
+                icon: "fm-folder",
+                value: "创建根目录",
+                batch: "root",
+                method:"createRootFolder"
+              }, 4);
+              this.getRow
+            }
+        });
+        //双击文件下载提示
+        $$("files").attachEvent("onBeforeRun",function(id){
+            webix.confirm({
+                text:"是否下载该文件?",
+                ok:"是",
+                cancel:"否",
+                callback:function(result){
+                  if (result) {
+                    $$('files').download(id)
+                    $$("files").load(window.fileUrl).then(function (){
+                      $$("files").refreshCursor()
+                    })
+                  }
+                }
+            });
+            return false;
+        });
+
+        //获取菜单，添加授权、预览按钮
+        var actions = $$("files").getMenu();
+        actions.attachEvent("onItemClick", function(id, e, node){
+            selectId = $$("files").getActive();
+            if(id == "auth"){
+                layer.open({
+                    type: 1,
+                    title:"授权",
+                    shift: 2,
+                    area: ['700px', '400px'],
+                    content: $("#add-main"),
+                    success: function(layero, index){
+                        $("#id").val(selectId);
+                        webix.ajax().put("/api/getInitAuth?token=QHs5NxxRtM5WUlx1yM&id="+selectId,function(data) {
+                            var res = JSON.parse(data);
+                            if(res.success){
+                                var result = res.result;
+                                //初始化授权输入框
+                                $("#userSelect").val(result.userNames?result.userNames:null);
+                                $('#userIds').val(result.userIds?result.userIds:null);
+                                $('#roleSelect').val(result.roleNames?result.roleNames:null);
+                                $('#roleIds').val(result.roleIds?result.roleIds:null);
+                                $('#orgSelect').val(result.departNames?result.departNames:null);
+                                $('#orgIds').val(result.departIds?result.departIds:null);
+                            }
+                        });
+                    }
+                });
+            }else if(id == "preview"){
+                webix.ajax().get("/fm/admin/api/doPreview?id="+selectId,function(data) {
+                    if(data.message != null){
+                        data = data.message;
+                    }
+                    $$("files").load(window.fileUrl).then(function (){
+                      $$("files").refreshCursor()
+                    })
+                    var template;
+                    try {
+                      var url = JSON.parse(data).url;
+                      window.open(url)
+                    } catch (e) {
+                      template = data
+                    }
+                    if(!template){
+                        return;
+                    }
+                    //update-begin-author:taoyan date:20201229 for:【我的文档】图片预览没有最大化和缩小，图片大了看不全
+                    layer.open({
+                        type: 1,
+                        title: '文件预览',
+                        shadeClose: true,
+                        maxmin: true,
+                        area:['600px', '500px'],
+                        offset:['100px', '300px'],
+                        content: template
+                    });
+                    //update-begin-author:taoyan date:20201229 for:【我的文档】图片预览没有最大化和缩小，图片大了看不全
+                });
+            }else if(id == "showlog"){
+                layer.open({
+                    type: 1,
+                    title:"文件日志",
+                    shift: 2,
+                    content: $("#select-log"),
+                    area: ['750px', '600px'],
+                    btn: ['取消'],
+                    success:function(){
+                        table =  $.extend(table, {config: {checkName: 'checked'}});
+                        table.render({
+                            elem: '#log_table'
+                            ,url: '/api/showFileLog?id='+selectId
+                            ,method : 'get'
+                            ,response : {
+                                statusName : 'code',
+                                statusCode : 200,
+                                msgName : 'msg',
+                                countName : 'total',
+                                dataName : 'data'
+                            }
+                            ,title : '日志列表'
+                            ,cols : [[
+                                { type:"numbers",title:"#", width:80,align:'center'},
+                                { field:"userId",title:"用户", width:200,align:'center'},
+                                { field:"operateType",title:"操作类型",width:200,templet: function(d){
+                                        var type = d.operateType;
+                                        if(type === '1') return "创建";
+                                        if(type === '2') return "编辑";
+                                        if(type === '3') return "删除";
+                                        if(type === '4') return "查看";
+                                        if(type === '5') return "下载";
+                                    },align:'center'},
+                                { field:"operateTime",	title:"操作时间",width:200,align:'center'}
+                            ]]
+                            ,limits: [10, 20, 50]
+                            ,limit: 10
+                            ,page: true
+                        });
+                    }
+                });
+            }
+        });
+    });
+    }
+</script>
+</body>
+</html>
