@@ -6,7 +6,7 @@ minio中文文档：http://docs.minio.org.cn/docs/
 
 > 注意： 此demo 用到了webix ui 组件，需要购买授权才能用于商用，这里仅是学习之用!!
 
-
+此demo 的介绍：[链接](https://mp.weixin.qq.com/s/K_C6p9MqCBNzd56fGxvBhw) 
 
 ### MinIO docker 安装
 
